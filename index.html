@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PrimaVendedor — Módulo 1</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <div id="gameContainer"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hb">
+      <div class="hl">COMERCIAL</div>
+      <div class="hv name" id="hName">—</div>
+      <div class="hv" id="hProfile" style="font-size:clamp(4px,0.6vw,5px);color:var(--red2)"></div>
+    </div>
+    <div class="ind-col">
+      <div class="ind-row-item">
+        <span class="ind-ico">📈</span>
+        <div class="ind-track"><div class="ind-fill f-rent" id="fRent" style="width:100%"></div></div>
+        <span class="ind-num" id="nRent">100</span>
+      </div>
+      <div class="ind-row-item">
+        <span class="ind-ico">🤝</span>
+        <div class="ind-track"><div class="ind-fill f-rel" id="fRel" style="width:100%"></div></div>
+        <span class="ind-num" id="nRel">100</span>
+      </div>
+      <div class="ind-row-item">
+        <span class="ind-ico">🏷️</span>
+        <div class="ind-track"><div class="ind-fill f-rep" id="fRep" style="width:100%"></div></div>
+        <span class="ind-num" id="nRep">100</span>
+      </div>
+    </div>
+    <div class="hb">
+      <div class="hl">CLIENTES</div>
+      <div class="cdots" id="cdots"></div>
+    </div>
+    <div class="hb">
+      <div class="hl">TIEMPO</div>
+      <div class="hv" id="hTime">0s</div>
+    </div>
+  </div>
+
+  <button id="muteBtn" title="Silenciar">🔊</button>
+
+  <!-- CUSTOMIZE -->
+  <div id="sCust" class="screen on">
+    <div class="cust-inner">
+      <div class="game-logo">🪵 PRIMAVENDEDOR</div>
+      <div class="game-mod">MÓDULO 1 · DEFIENDE EL PRECIO</div>
+
+      <div class="section-label">ELIGE TU LOOK</div>
+      <div class="skin-row" id="skinRow"></div>
+
+      <div class="section-label">ELIGE TU PERFIL COMERCIAL</div>
+      <div class="profile-row" id="profileRow"></div>
+
+      <div class="name-wrap">
+        <div class="section-label">TU NOMBRE</div>
+        <input class="name-input" id="nameIn" type="text" maxlength="14" placeholder="ej. Carlos Vélez">
+      </div>
+      <button class="btn-play" id="btnPlay">▶ EMPEZAR</button>
+    </div>
+  </div>
+
+  <!-- WARNING SCREEN -->
+  <div id="sWarn" class="screen">
+    <div class="warn-box">
+      <div class="warn-icon">⚠️</div>
+      <div class="warn-title">¡CUIDADO!</div>
+      <div class="warn-sub">ALERTA DE COMPETENCIA</div>
+      <div class="warn-body">
+        Los vendedores de la competencia están rondando a tus clientes. Si te alcanzan en el camino, tus indicadores se van a resentir.
+      </div>
+      <div class="warn-effect">
+        <div class="warn-ind"><div class="warn-ind-ico">📈</div><div class="warn-ind-delta">-2</div><div class="warn-ind-name">Rentabilidad</div></div>
+        <div class="warn-ind"><div class="warn-ind-ico">🤝</div><div class="warn-ind-delta">-2</div><div class="warn-ind-name">Relación</div></div>
+        <div class="warn-ind"><div class="warn-ind-ico">🏷️</div><div class="warn-ind-delta">-2</div><div class="warn-ind-name">Reputación</div></div>
+      </div>
+      <div class="warn-tip">Sáltalos encima para eliminarlos antes de que lleguen al cliente. Cada contacto con ellos debilita tu posición negociadora.</div>
+      <button class="btn-warn" id="btnCloseWarn">ENTENDIDO — A VENDER ▶</button>
+    </div>
+  </div>
+
+  <!-- CLIENT CARD -->
+  <div id="sCard" class="screen">
+    <div class="card-wrap" id="cardWrap"></div>
+  </div>
+
+  <!-- DIALOGUE -->
+  <div id="sDial" class="screen">
+    <div class="dial-box">
+      <div class="dial-top">
+        <div class="dial-who" id="dialWho"></div>
+        <div class="dial-step" id="dialStep"></div>
+      </div>
+      <div class="dial-progress" id="dialProgress"></div>
+      <div class="dial-text" id="dialText"></div>
+      <div class="dial-opts" id="dialOpts"></div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="sFb" class="screen">
+    <div class="fb-box" id="fbBox">
+      <div class="fb-emoji" id="fbEmoji"></div>
+      <div class="fb-title" id="fbTitle"></div>
+      <div class="fb-deltas" id="fbDeltas"></div>
+      <div class="fb-sarcasm" id="fbSarcasm"></div>
+      <div class="fb-lesson" id="fbLesson"></div>
+      <button class="fb-btn" id="fbBtn">CONTINUAR ▶</button>
+    </div>
+  </div>
+
+  <!-- CLIENT RESULT -->
+  <div id="sResult" class="screen">
+    <div class="result-wrap" id="resultWrap"></div>
+  </div>
+
+  <!-- END -->
+  <div id="sEnd" class="screen">
+    <div class="end-title" id="endTitle"></div>
+    <div class="end-inds" id="endInds"></div>
+    <div class="end-diag" id="endDiag"></div>
+    <div class="end-rank" id="endRank"></div>
+    <div class="end-actions">
+      <button class="btn-report" id="btnReport">⬇ DESCARGAR REPORTE</button>
+      <button class="btn-restart" id="btnRestart">↩ JUGAR DE NUEVO</button>
+    </div>
+  </div>
+
+  <!-- Mobile -->
+  <div id="mCtrl">
+    <div class="mc">
+      <div class="mcb" id="btnLeft">◀</div>
+      <div class="mcb" id="btnRight">▶</div>
+    </div>
+    <div class="mc">
+      <div class="mcb" id="btnJump">▲</div>
+    </div>
+  </div>
+  <div id="dmg"></div>
+
+  <div id="rotatePrompt">
+    <div class="rotate-icon">📱</div>
+    <div class="rotate-title">GIRA TU DISPOSITIVO</div>
+    <div class="rotate-body">PrimaVendedor se juega mejor en horizontal. Rota tu teléfono para continuar.</div>
+  </div>
+</div>
+
+<script src="assets/vendor/phaser.min.js"></script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
