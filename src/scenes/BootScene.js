@@ -19,13 +19,22 @@ export class BootScene extends Phaser.Scene {
 
     SoundManager.preload(this);
 
-    // Plancha de plataforma generada por código (paleta neutra, se tiñe por escena)
+    // Cajón de madera — obstáculo sólido que hay que saltar, no una
+    // plataforma elevada de una sola vía.
     const g = this.make.graphics({ x: 0, y: 0, add: false });
-    g.fillStyle(0x3a2808, 1);
-    g.fillRect(0, 0, 110, 14);
-    g.fillStyle(0xffffff, 0.08);
-    for (let x = 10; x < 110; x += 14) g.fillRect(x, 0, 1, 14);
-    g.generateTexture('tex_platform', 110, 14);
+    const CW = 64, CH = 64;
+    g.fillStyle(0x5a3a1e, 1);
+    g.fillRect(0, 0, CW, CH);
+    g.fillStyle(0x6b4a28, 1);
+    g.fillRect(3, 3, CW - 6, CH - 6);
+    g.lineStyle(4, 0x3a2410, 0.85);
+    g.beginPath(); g.moveTo(5, 5); g.lineTo(CW - 5, CH - 5); g.strokePath();
+    g.beginPath(); g.moveTo(CW - 5, 5); g.lineTo(5, CH - 5); g.strokePath();
+    g.lineStyle(3, 0x3a2410, 1);
+    g.strokeRect(1, 1, CW - 2, CH - 2);
+    g.fillStyle(0xffffff, 0.1);
+    g.fillRect(3, 3, CW - 6, 7);
+    g.generateTexture('tex_crate', CW, CH);
     g.destroy();
 
     // Nube decorativa/interactiva

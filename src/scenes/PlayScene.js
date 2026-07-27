@@ -59,19 +59,16 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5, 1).setVisible(false);
     this.clientBubble = this.add.text(0, 0, '💬', { fontSize: '22px' }).setOrigin(0.5, 1).setVisible(false);
 
-    this.platformsGroup = this.physics.add.staticGroup();
-    this.platformAccents = [];
+    // Cajones: obstáculos sólidos apoyados en el piso — bloquean de
+    // frente como una pared y hay que saltarlos (o pararse encima),
+    // no plataformas elevadas de una sola vía con espacio para pasar
+    // por debajo.
+    this.obstaclesGroup = this.physics.add.staticGroup();
 
     this.groundBody = this.add.zone(0, GROUND_Y, LEVEL_WIDTH, CANVAS_H - GROUND_Y).setOrigin(0, 0);
     this.physics.add.existing(this.groundBody, true);
     this.physics.add.collider(this.playerBody, this.groundBody, () => { this.onGround = true; });
-    // Plataformas de una sola vía (jump-through): cada body de plataforma
-    // solo tiene activa la cara de arriba (checkCollision.up), así que
-    // solo detiene al jugador cayendo sobre ella. Se puede caminar debajo
-    // y saltar a través de abajo sin chocar. Es la técnica estándar de
-    // Arcade Physics para este tipo de plataforma — más confiable que un
-    // callback manual basado en la posición del frame anterior.
-    this.physics.add.collider(this.playerBody, this.platformsGroup, () => { this.onGround = true; });
+    this.physics.add.collider(this.playerBody, this.obstaclesGroup, () => { this.onGround = true; });
 
     this.physics.add.overlap(this.playerBody, this.enemyGroup, this.onPlayerEnemyOverlap, undefined, this);
 
@@ -112,33 +109,31 @@ export class PlayScene extends Phaser.Scene {
     this.floorGfx.lineBetween(0, GROUND_Y, LEVEL_WIDTH, GROUND_Y);
     this.floorGfx.setDepth(-10);
 
-    // Plataformas
-    this.platformsGroup.clear(true, true);
-    this.platformAccents.forEach(r => r.destroy());
-    this.platformAccents = [];
-    const platformDefs = [
-      { xf: 0.14, yOff: 95, w: 110 }, { xf: 0.25, yOff: 135, w: 90 },
-      { xf: 0.36, yOff: 85, w: 110 }, { xf: 0.47, yOff: 125, w: 90 },
-      { xf: 0.58, yOff: 88, w: 110 }, { xf: 0.68, yOff: 115, w: 90 },
-      { xf: 0.78, yOff: 80, w: 110 }, { xf: 0.88, yOff: 110, w: 90 },
+    // Cajones — obstáculos sólidos sobre el piso, hay que saltarlos.
+    // Altura muy por debajo del apice de salto (~152px) para que siempre
+    // sean superables.
+    this.obstaclesGroup.clear(true, true);
+    const crateDefs = [
+      { xf: 0.10, w: 62, h: 86 }, { xf: 0.23, w: 70, h: 76 },
+      { xf: 0.38, w: 60, h: 90 }, { xf: 0.52, w: 66, h: 80 },
+      { xf: 0.64, w: 60, h: 88 }, { xf: 0.76, w: 70, h: 78 },
     ];
-    platformDefs.forEach(pd => {
-      const x = LEVEL_WIDTH * pd.xf, y = GROUND_Y - pd.yOff;
-      const p = this.platformsGroup.create(x, y, 'tex_platform').setOrigin(0, 0).setDisplaySize(pd.w, 14);
+    crateDefs.forEach(cd => {
+      const x = LEVEL_WIDTH * cd.xf, y = GROUND_Y - cd.h;
+      const p = this.obstaclesGroup.create(x, y, 'tex_crate').setOrigin(0, 0).setDisplaySize(cd.w, cd.h);
       p.refreshBody();
-      p.body.checkCollision.down = false;
-      p.body.checkCollision.left = false;
-      p.body.checkCollision.right = false;
-      const stripe = this.add.rectangle(x, y, pd.w, 3, accent).setOrigin(0, 0).setAlpha(0.8);
-      this.platformAccents.push(stripe);
     });
 
-    // Competencia — vienen derecho hacia el jugador (izquierda constante),
-    // sin patrullaje: el jugador los esquiva o los salta encima, nada más.
+    // Competencia — patrullan un rango acotado alrededor de su punto de
+    // aparición (no derivan hasta el borde del mundo, donde antes se
+    // quedaban congelados). Aparecen recién después de un breve respiro
+    // al iniciar el nivel, escalonados, para que no salten sobre el
+    // jugador de una vez.
     this.enemies.forEach(e => { e.sprite.destroy(); this.enemyGroup.remove(e.zone, true, true); });
     this.enemies = [];
-    const spawnFracs = [0.18, 0.34, 0.50, 0.66, 0.82];
-    spawnFracs.forEach(f => {
+    const spawnFracs = [0.10, 0.20, 0.30, 0.42, 0.54, 0.64, 0.74, 0.84];
+    const startNow = this.time.now;
+    spawnFracs.forEach((f, i) => {
       const x = LEVEL_WIDTH * f;
       const zone = this.add.zone(x, GROUND_Y - ENEMY_BOX.h, ENEMY_BOX.w, ENEMY_BOX.h).setOrigin(0, 0);
       this.physics.add.existing(zone, false);
@@ -147,11 +142,17 @@ export class PlayScene extends Phaser.Scene {
       // de agregarlo al grupo, no antes, o esta config se pierde.
       this.enemyGroup.add(zone);
       zone.body.setAllowGravity(false);
-      zone.body.setCollideWorldBounds(true);
-      zone.body.setVelocityX(-ENEMY_SPEED);
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      const speed = ENEMY_SPEED * (0.7 + Math.random() * 0.4);
+      const range = 130;
       const sprite = this.add.image(0, 0, 'competencia_moviendose');
       anchorSprite(sprite, 'competencia_moviendose');
-      this.enemies.push({ zone, sprite, alive: true });
+      this.enemies.push({
+        zone, sprite, alive: true, dir, speed,
+        minX: Math.max(40, x - range), maxX: Math.min(LEVEL_WIDTH - 40, x + range),
+        activeAt: startNow + 1200 + i * 250 + Math.random() * 400,
+        activated: false,
+      });
     });
 
     // Nubes decorativas / interactivas
@@ -306,9 +307,15 @@ export class PlayScene extends Phaser.Scene {
     const footY = this.playerBody.y + this.playerBody.height;
     this.playerSprite.setPosition(footX, footY).setScale(this.playerScale).setFlipX(this.facing < 0);
 
-    // ── Enemigos ── (van derecho hacia el jugador, sin patrullaje)
+    // ── Enemigos ── (patrullan un rango acotado; arrancan con un retraso)
     this.enemies.forEach(e => {
       if (!e.alive) return;
+      if (!e.activated) {
+        if (time >= e.activeAt) { e.activated = true; e.zone.body.setVelocityX(e.dir * e.speed); }
+      } else {
+        if (e.zone.x <= e.minX) e.zone.body.setVelocityX(Math.abs(e.speed));
+        else if (e.zone.x >= e.maxX) e.zone.body.setVelocityX(-Math.abs(e.speed));
+      }
       const eFacing = e.zone.body.velocity.x < 0 ? -1 : 1;
       const eFootX = e.zone.x + e.zone.width / 2;
       const eFootY = e.zone.y + e.zone.height;

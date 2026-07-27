@@ -85,8 +85,18 @@ function buildCustomize() {
 }
 
 function goPlay() {
-  const n = $('nameIn').value.trim();
-  gs.name = n || 'Comercial';
+  const nameInput = $('nameIn');
+  const n = nameInput.value.trim();
+  if (!n) {
+    nameInput.classList.add('invalid');
+    $('nameHint').classList.add('on');
+    nameInput.focus();
+    nameInput.classList.remove('shake'); void nameInput.offsetWidth; nameInput.classList.add('shake');
+    return;
+  }
+  nameInput.classList.remove('invalid');
+  $('nameHint').classList.remove('on');
+  gs.name = n;
   gs.skinIdx = [...document.querySelectorAll('.skin-card')].findIndex(el => el.classList.contains('sel'));
   gs.profileIdx = [...document.querySelectorAll('.profile-card')].findIndex(el => el.classList.contains('sel'));
   if (gs.skinIdx < 0) gs.skinIdx = 0;
@@ -324,6 +334,14 @@ function wireInput() {
     if ([' ', 'Enter'].includes(e.key) && gs.phase === 'feedback') closeFb();
     if (e.key === ' ') e.preventDefault();
   });
+
+  $('nameIn').addEventListener('input', () => {
+    if ($('nameIn').value.trim()) {
+      $('nameIn').classList.remove('invalid');
+      $('nameHint').classList.remove('on');
+    }
+  });
+  $('nameIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') goPlay(); });
 
   const bindHold = (id, onDown, onUp) => {
     const el = $(id);

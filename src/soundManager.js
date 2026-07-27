@@ -1,5 +1,5 @@
 import { SFX_MANIFEST, MUSIC_MANIFEST } from './audioManifest.js';
-import { playSynth } from './synthAudio.js';
+import { playSynth, playMusicSynth, stopMusicSynth } from './synthAudio.js';
 
 // ════════════════════════════════════════════════════════════════
 // SOUND MANAGER
@@ -16,6 +16,7 @@ export class SoundManager {
   constructor(scene) {
     this.scene = scene;
     this.currentMusic = null;
+    this.currentTheme = null;
     this.muted = false;
     this._lastMove = 0;
   }
@@ -48,19 +49,32 @@ export class SoundManager {
   }
 
   playMusic(theme) {
+    this.currentTheme = theme;
+    if (this.muted) return;
     const key = 'music_' + theme;
-    if (this.muted || !this.has(key)) return;
-    if (this.currentMusic) this.currentMusic.stop();
-    this.currentMusic = this.scene.sound.add(key, { loop: true, volume: 0.35 });
-    this.currentMusic.play();
+    if (this.currentMusic) { this.currentMusic.stop(); this.currentMusic = null; }
+    if (this.has(key)) {
+      stopMusicSynth();
+      this.currentMusic = this.scene.sound.add(key, { loop: true, volume: 0.35 });
+      this.currentMusic.play();
+    } else {
+      playMusicSynth(theme); // respaldo mientras no haya pista real para este escenario
+    }
   }
 
   stopMusic() {
     if (this.currentMusic) { this.currentMusic.stop(); this.currentMusic = null; }
+    stopMusicSynth();
+    this.currentTheme = null;
   }
 
   setMuted(m) {
     this.muted = m;
     this.scene.sound.mute = m;
+    if (m) {
+      stopMusicSynth();
+    } else if (this.currentTheme && !this.has('music_' + this.currentTheme)) {
+      playMusicSynth(this.currentTheme);
+    }
   }
 }
