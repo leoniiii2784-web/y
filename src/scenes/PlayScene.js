@@ -14,9 +14,11 @@ const CLIENT_MARGIN = 260;
 const PLAYER_SPEED = 260;
 const JUMP_VELOCITY = -720;
 
-const PLAYER_HEIGHT = 150;
-const ENEMY_HEIGHT = 130;
-const CLIENT_HEIGHT = 175;
+const PLAYER_HEIGHT = 122;
+const ENEMY_HEIGHT = 104;
+const CLIENT_HEIGHT = 140;
+
+const ENEMY_SPEED = 110;
 
 const PLAYER_BOX = { w: 60, h: PLAYER_HEIGHT };
 const ENEMY_BOX = { w: 56, h: ENEMY_HEIGHT };
@@ -57,22 +59,9 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5, 1).setVisible(false);
     this.clientBubble = this.add.text(0, 0, '💬', { fontSize: '22px' }).setOrigin(0.5, 1).setVisible(false);
 
-    this.platformsGroup = this.physics.add.staticGroup();
-    this.platformAccents = [];
-
     this.groundBody = this.add.zone(0, GROUND_Y, LEVEL_WIDTH, CANVAS_H - GROUND_Y).setOrigin(0, 0);
     this.physics.add.existing(this.groundBody, true);
     this.physics.add.collider(this.playerBody, this.groundBody, () => { this.onGround = true; });
-    // Plataformas de una sola vía: el jugador (más alto que el hueco entre
-    // piso y plataforma) solo colisiona si en el frame anterior ya venía
-    // parado sobre ella o cayendo desde arriba — nunca choca de lado ni
-    // por abajo al caminar debajo. Sin esto, cualquier plataforma dentro
-    // del rango de salto queda más baja que la altura del personaje y
-    // bloquea el paso como si fuera una pared.
-    this.physics.add.collider(this.playerBody, this.platformsGroup, () => { this.onGround = true; }, (playerZone, platform) => {
-      const body = playerZone.body;
-      return (body.prev.y + body.height) <= platform.body.y + 4;
-    });
 
     this.physics.add.overlap(this.playerBody, this.enemyGroup, this.onPlayerEnemyOverlap, undefined, this);
 
@@ -80,7 +69,7 @@ export class PlayScene extends Phaser.Scene {
     this.bgLayer = null;
     this.clouds = [];
 
-    this.arrowHint = this.add.text(0, 0, '▶▶', { fontFamily: 'sans-serif', fontSize: '18px', fontStyle: 'bold', color: '#e8401c' })
+    this.arrowHint = this.add.text(0, 0, '▶▶', { fontFamily: 'sans-serif', fontSize: '18px', fontStyle: 'bold', color: '#b8823f' })
       .setScrollFactor(0).setOrigin(1, 0.5).setVisible(false);
 
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -113,39 +102,25 @@ export class PlayScene extends Phaser.Scene {
     this.floorGfx.lineBetween(0, GROUND_Y, LEVEL_WIDTH, GROUND_Y);
     this.floorGfx.setDepth(-10);
 
-    // Plataformas
-    this.platformsGroup.clear(true, true);
-    this.platformAccents.forEach(r => r.destroy());
-    this.platformAccents = [];
-    const platformDefs = [
-      { xf: 0.14, yOff: 95, w: 110 }, { xf: 0.25, yOff: 135, w: 90 },
-      { xf: 0.36, yOff: 85, w: 110 }, { xf: 0.47, yOff: 125, w: 90 },
-      { xf: 0.58, yOff: 88, w: 110 }, { xf: 0.68, yOff: 115, w: 90 },
-      { xf: 0.78, yOff: 80, w: 110 }, { xf: 0.88, yOff: 110, w: 90 },
-    ];
-    platformDefs.forEach(pd => {
-      const x = LEVEL_WIDTH * pd.xf, y = GROUND_Y - pd.yOff;
-      const p = this.platformsGroup.create(x, y, 'tex_platform').setOrigin(0, 0).setDisplaySize(pd.w, 14);
-      p.refreshBody();
-      const stripe = this.add.rectangle(x, y, pd.w, 3, accent).setOrigin(0, 0).setAlpha(0.8);
-      this.platformAccents.push(stripe);
-    });
-
-    // Enemigos
+    // Competencia — vienen derecho hacia el jugador (izquierda constante),
+    // sin patrullaje: el jugador los esquiva o los salta encima, nada más.
     this.enemies.forEach(e => { e.sprite.destroy(); this.enemyGroup.remove(e.zone, true, true); });
     this.enemies = [];
-    const spawnFracs = [0.15, 0.27, 0.40, 0.55, 0.72];
+    const spawnFracs = [0.18, 0.34, 0.50, 0.66, 0.82];
     spawnFracs.forEach(f => {
       const x = LEVEL_WIDTH * f;
       const zone = this.add.zone(x, GROUND_Y - ENEMY_BOX.h, ENEMY_BOX.w, ENEMY_BOX.h).setOrigin(0, 0);
       this.physics.add.existing(zone, false);
-      zone.body.setAllowGravity(false);
-      const dir = Math.random() < 0.5 ? -1 : 1;
-      const speed = 60 + Math.random() * 50;
-      zone.body.setVelocityX(dir * speed);
+      // Group.add() re-habilita el body con sus valores por defecto
+      // (gravedad on, velocidad 0) — hay que configurar el body DESPUÉS
+      // de agregarlo al grupo, no antes, o esta config se pierde.
       this.enemyGroup.add(zone);
+      zone.body.setAllowGravity(false);
+      zone.body.setCollideWorldBounds(true);
+      zone.body.setVelocityX(-ENEMY_SPEED);
       const sprite = this.add.image(0, 0, 'competencia_moviendose');
-      this.enemies.push({ zone, sprite, dir, speed, minX: Math.max(40, x - 150), maxX: Math.min(LEVEL_WIDTH - 40, x + 150), alive: true });
+      anchorSprite(sprite, 'competencia_moviendose');
+      this.enemies.push({ zone, sprite, alive: true });
     });
 
     // Nubes decorativas / interactivas
@@ -164,10 +139,11 @@ export class PlayScene extends Phaser.Scene {
       this.clouds.push(c);
     }
 
-    // Cliente
+    // Cliente — el sprite mira a la derecha por defecto; lo volteamos
+    // para que quede de frente al jugador, que llega desde la izquierda.
     this.clientSprite.setTexture('cliente_esperando');
     anchorSprite(this.clientSprite, 'cliente_esperando');
-    this.clientSprite.setScale(this.clientScale).setVisible(true);
+    this.clientSprite.setScale(this.clientScale).setFlipX(true).setVisible(true);
     this.clientSprite.setPosition(this.clientX, GROUND_Y);
     this.clientLabel.setText(client.name).setPosition(this.clientX, GROUND_Y - CLIENT_HEIGHT - 30).setVisible(true);
     this.clientBubble.setPosition(this.clientX, GROUND_Y - CLIENT_HEIGHT - 34).setVisible(true);
@@ -205,7 +181,7 @@ export class PlayScene extends Phaser.Scene {
       enemy.alive = false;
       pBody.setVelocityY(JUMP_VELOCITY * 0.7);
       this.soundManager.play('stomp');
-      this.emitBurst(enemyZone.x, enemyZone.y, 0xe74c3c);
+      this.emitBurst(enemyZone.x, enemyZone.y, 0xa85c42);
       enemy.sprite.setTexture('competencia_golpeado');
       anchorSprite(enemy.sprite, 'competencia_golpeado');
       this.tweens.add({
@@ -299,15 +275,12 @@ export class PlayScene extends Phaser.Scene {
     const footY = this.playerBody.y + this.playerBody.height;
     this.playerSprite.setPosition(footX, footY).setScale(this.playerScale).setFlipX(this.facing < 0);
 
-    // ── Enemigos ──
+    // ── Enemigos ── (van derecho hacia el jugador, sin patrullaje)
     this.enemies.forEach(e => {
       if (!e.alive) return;
-      if (e.zone.x < e.minX) e.zone.body.setVelocityX(Math.abs(e.speed));
-      if (e.zone.x > e.maxX) e.zone.body.setVelocityX(-Math.abs(e.speed));
       const eFacing = e.zone.body.velocity.x < 0 ? -1 : 1;
       const eFootX = e.zone.x + e.zone.width / 2;
       const eFootY = e.zone.y + e.zone.height;
-      anchorSprite(e.sprite.setTexture('competencia_moviendose'), 'competencia_moviendose');
       e.sprite.setPosition(eFootX, eFootY).setScale(this.enemyScale).setFlipX(eFacing < 0);
     });
 

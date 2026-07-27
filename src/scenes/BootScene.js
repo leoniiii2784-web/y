@@ -19,15 +19,6 @@ export class BootScene extends Phaser.Scene {
 
     SoundManager.preload(this);
 
-    // Plancha de plataforma generada por código (paleta neutra, se tiñe por escena)
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
-    g.fillStyle(0x3a2808, 1);
-    g.fillRect(0, 0, 110, 14);
-    g.fillStyle(0xffffff, 0.08);
-    for (let x = 10; x < 110; x += 14) g.fillRect(x, 0, 1, 14);
-    g.generateTexture('tex_platform', 110, 14);
-    g.destroy();
-
     // Nube decorativa/interactiva
     const gc = this.make.graphics({ x: 0, y: 0, add: false });
     gc.fillStyle(0xffffff, 0.9);
