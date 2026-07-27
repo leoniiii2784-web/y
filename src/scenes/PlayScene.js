@@ -59,9 +59,19 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5, 1).setVisible(false);
     this.clientBubble = this.add.text(0, 0, '💬', { fontSize: '22px' }).setOrigin(0.5, 1).setVisible(false);
 
+    this.platformsGroup = this.physics.add.staticGroup();
+    this.platformAccents = [];
+
     this.groundBody = this.add.zone(0, GROUND_Y, LEVEL_WIDTH, CANVAS_H - GROUND_Y).setOrigin(0, 0);
     this.physics.add.existing(this.groundBody, true);
     this.physics.add.collider(this.playerBody, this.groundBody, () => { this.onGround = true; });
+    // Plataformas de una sola vía (jump-through): cada body de plataforma
+    // solo tiene activa la cara de arriba (checkCollision.up), así que
+    // solo detiene al jugador cayendo sobre ella. Se puede caminar debajo
+    // y saltar a través de abajo sin chocar. Es la técnica estándar de
+    // Arcade Physics para este tipo de plataforma — más confiable que un
+    // callback manual basado en la posición del frame anterior.
+    this.physics.add.collider(this.playerBody, this.platformsGroup, () => { this.onGround = true; });
 
     this.physics.add.overlap(this.playerBody, this.enemyGroup, this.onPlayerEnemyOverlap, undefined, this);
 
@@ -101,6 +111,27 @@ export class PlayScene extends Phaser.Scene {
     this.floorGfx.lineStyle(2, 0xffffff, 0.15);
     this.floorGfx.lineBetween(0, GROUND_Y, LEVEL_WIDTH, GROUND_Y);
     this.floorGfx.setDepth(-10);
+
+    // Plataformas
+    this.platformsGroup.clear(true, true);
+    this.platformAccents.forEach(r => r.destroy());
+    this.platformAccents = [];
+    const platformDefs = [
+      { xf: 0.14, yOff: 95, w: 110 }, { xf: 0.25, yOff: 135, w: 90 },
+      { xf: 0.36, yOff: 85, w: 110 }, { xf: 0.47, yOff: 125, w: 90 },
+      { xf: 0.58, yOff: 88, w: 110 }, { xf: 0.68, yOff: 115, w: 90 },
+      { xf: 0.78, yOff: 80, w: 110 }, { xf: 0.88, yOff: 110, w: 90 },
+    ];
+    platformDefs.forEach(pd => {
+      const x = LEVEL_WIDTH * pd.xf, y = GROUND_Y - pd.yOff;
+      const p = this.platformsGroup.create(x, y, 'tex_platform').setOrigin(0, 0).setDisplaySize(pd.w, 14);
+      p.refreshBody();
+      p.body.checkCollision.down = false;
+      p.body.checkCollision.left = false;
+      p.body.checkCollision.right = false;
+      const stripe = this.add.rectangle(x, y, pd.w, 3, accent).setOrigin(0, 0).setAlpha(0.8);
+      this.platformAccents.push(stripe);
+    });
 
     // Competencia — vienen derecho hacia el jugador (izquierda constante),
     // sin patrullaje: el jugador los esquiva o los salta encima, nada más.
