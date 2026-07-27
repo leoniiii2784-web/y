@@ -1,4 +1,5 @@
 import { SFX_MANIFEST, MUSIC_MANIFEST } from './audioManifest.js';
+import { playSynth } from './synthAudio.js';
 
 // ════════════════════════════════════════════════════════════════
 // SOUND MANAGER
@@ -6,9 +7,11 @@ import { SFX_MANIFEST, MUSIC_MANIFEST } from './audioManifest.js';
 // Envuelve Phaser.Sound. Ningún archivo de audio real está incluido
 // todavía (ver audioManifest.js) — el loader intenta cargarlos y
 // Phaser emite 'loaderror' por cada uno que no exista, sin frenar el
-// resto de la carga. play()/playMusic() verifican si la clave quedó
-// realmente en caché antes de sonar, así el juego funciona en
-// silencio hoy y se activa solo con soltar los archivos.
+// resto de la carga. Mientras no haya archivos reales, los efectos
+// (no la música) se generan por código vía Web Audio (synthAudio.js)
+// para que el juego no quede mudo. En cuanto se suelte un archivo
+// real con la clave correspondiente, este toma prioridad automática
+// y el synth deja de sonar para esa clave — no hay que tocar código.
 export class SoundManager {
   constructor(scene) {
     this.scene = scene;
@@ -31,8 +34,9 @@ export class SoundManager {
   }
 
   play(key, config) {
-    if (this.muted || !this.has(key)) return;
-    this.scene.sound.play(key, config);
+    if (this.muted) return;
+    if (this.has(key)) { this.scene.sound.play(key, config); return; }
+    playSynth(key); // respaldo mientras no haya archivo real para esta clave
   }
 
   playMove() {

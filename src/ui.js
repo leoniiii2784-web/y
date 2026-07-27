@@ -61,7 +61,7 @@ function buildCustomize() {
   }
 
   const pr = $('profileRow'); pr.innerHTML = '';
-  const barColors = ['#e8401c', '#2980b9', '#ff6b47'];
+  const barColors = ['#b8823f', '#5a7a8f', '#d9a869'];
   PROFILES.forEach((p, i) => {
     const d = document.createElement('div');
     d.className = 'profile-card' + (i === 0 ? ' sel' : '');
@@ -281,9 +281,9 @@ function endGame(win) {
   $('endTitle').className = 'end-title ' + (win ? 'win' : 'lose');
 
   $('endInds').innerHTML = [
-    ['📈', 'Rentabilidad', rent, '#e74c3c,#e8401c,#27ae60'],
-    ['🤝', 'Relación', rel, '#c0392b,#2980b9,#8e44ad'],
-    ['🏷️', 'Reputación', rep, '#7b241c,#e8401c,#ff6b47'],
+    ['📈', 'Rentabilidad', rent, '#a85c42,#b8823f,#6b8f5a'],
+    ['🤝', 'Relación', rel, '#8a4a35,#5a7a8f,#7a6a8a'],
+    ['🏷️', 'Reputación', rep, '#4a2e22,#b8823f,#d9a869'],
   ].map(([ico, name, v, grad]) => `
     <div class="e-ind">
       <div class="e-ind-ico">${ico}</div>

@@ -31,10 +31,10 @@ export const SPRITE_MANIFEST = {
   cliente_esperando:      { w: 576, h: 384, bboxTop: 24, bboxBottom: 361, bboxLeft: 190, bboxRight: 405, footYFrac: 0.94010, centerXFrac: 0.51649 },
   cliente_hablando:       { w: 576, h: 384, bboxTop: 19, bboxBottom: 377, bboxLeft: 198, bboxRight: 442, footYFrac: 0.98177, centerXFrac: 0.55556 },
 
-  competencia_idle:       { w: 576, h: 384, bboxTop: 27, bboxBottom: 357, bboxLeft: 163, bboxRight: 383, footYFrac: 0.92969, centerXFrac: 0.47396 },
-  competencia_moviendose: { w: 576, h: 384, bboxTop: 27, bboxBottom: 357, bboxLeft: 163, bboxRight: 383, footYFrac: 0.92969, centerXFrac: 0.47396 },
-  competencia_salto:      { w: 576, h: 384, bboxTop: 27, bboxBottom: 376, bboxLeft: 163, bboxRight: 374, footYFrac: 0.97917, centerXFrac: 0.46615 },
-  competencia_golpeado:   { w: 576, h: 384, bboxTop: 18, bboxBottom: 366, bboxLeft: 175, bboxRight: 383, footYFrac: 0.95312, centerXFrac: 0.48438 },
+  competencia_idle:       { w: 576, h: 384, bboxTop: 49, bboxBottom: 349, bboxLeft: 216, bboxRight: 351, footYFrac: 0.90885, centerXFrac: 0.49219 },
+  competencia_moviendose: { w: 576, h: 384, bboxTop: 58, bboxBottom: 357, bboxLeft: 172, bboxRight: 380, footYFrac: 0.92969, centerXFrac: 0.47917 },
+  competencia_salto:      { w: 576, h: 384, bboxTop: 34, bboxBottom: 365, bboxLeft: 200, bboxRight: 352, footYFrac: 0.95052, centerXFrac: 0.47917 },
+  competencia_golpeado:   { w: 576, h: 384, bboxTop: 105, bboxBottom: 353, bboxLeft: 190, bboxRight: 370, footYFrac: 0.91927, centerXFrac: 0.48611 },
 };
 
 // Altura de referencia (bbox del pose "idle"/"neutral") usada para
